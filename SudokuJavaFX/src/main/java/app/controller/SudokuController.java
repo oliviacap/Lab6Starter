@@ -46,6 +46,7 @@ import pkgEnum.ePuzzleViolation;
 import pkgGame.Cell;
 import pkgGame.Sudoku;
 import pkgHelper.PuzzleViolation;
+import app.helper.SudokuCell;
 
 public class SudokuController implements Initializable {
 
@@ -88,7 +89,7 @@ public class SudokuController implements Initializable {
 		CreateSudokuInstance();
 		BuildGrids();
 	}
-	
+
 	/**
 	 * CreateSudokuInstance - Create an instance of Sudoku, set the attribute in the
 	 * 'Game' class
@@ -142,18 +143,12 @@ public class SudokuController implements Initializable {
 	private void BuildTopGrid() {
 		gpTop.getChildren().clear();
 
-		if(!game.getShowHints()) {
-			Label lblDifficulty = new Label(eGD.toString());
-			gpTop.add(lblDifficulty, 0, 0);
-			Label lblMistakes = new Label(this.game.getSudoku().getMistakesMessage());
-			gpTop.add(lblMistakes, 2, 0);
-		}
-		
-		else {
-			Label lblDifficulty = new Label(eGD.toString());
-			gpTop.add(lblDifficulty, 1, 0);
-		}
-		
+		Label lblDifficulty = new Label(eGD.toString());
+		gpTop.add(lblDifficulty, 0, 0);
+
+		Label lblMistakes = new Label(this.game.getSudoku().getMistakesMessage());
+		gpTop.add(lblMistakes, 1, 0);
+
 		ColumnConstraints colCon = new ColumnConstraints();
 		colCon.halignmentProperty().set(HPos.CENTER);
 		gpTop.getColumnConstraints().add(colCon);
@@ -189,13 +184,13 @@ public class SudokuController implements Initializable {
 			paneSource.getCell().setiCellValue(iCol + 1);
 			paneSource.getChildren().add(iv);
 
-			paneSource.getStyleClass().clear(); // Clear in pane
+			paneSource.getStyleClass().clear(); // Clear any errant styling in the pane
 
-			// if the pane was clicked set a event handler to fire 
+			// Set a event handler to fire if the pane was clicked
 			paneSource.setOnMouseClicked(e -> {
 				System.out.println(paneSource.getCell().getiCellValue());
 			});
-			
+
 			// This is going to fire if the number from the number grid is dragged
 			// Find the cell in the pane, put it on the Dragboard
 
@@ -211,7 +206,7 @@ public class SudokuController implements Initializable {
 					Dragboard db = paneSource.startDragAndDrop(TransferMode.ANY);
 
 					/* put a string on dragboard */
-					// Put the Cell on the clipboard-- cast as a cell on other side
+					// Put the Cell on the clipboard, on the other side, cast as a cell
 					ClipboardContent content = new ClipboardContent();
 					content.put(myFormat, paneSource.getCell());
 					db.setContent(content);
@@ -234,6 +229,7 @@ public class SudokuController implements Initializable {
 			public void handle(DragEvent event) {
 				if (event.getGestureSource() != spTrashCan && event.getDragboard().hasContent(myTrashCanFormat)) {
 					// Don't let the user drag over items that already have a cell value set
+
 					event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
 				}
 				event.consume();
@@ -245,14 +241,14 @@ public class SudokuController implements Initializable {
 				Dragboard db = event.getDragboard();
 				boolean success = false;
 				if (db.hasContent(myTrashCanFormat)) {
-					Cell CellFrom = (Cell) db.getContent(myTrashCanFormat);	
-					game.getSudoku().getPuzzle()[CellFrom.getiRow()][CellFrom.getiCol()] = 0;
-					success = true;
+					Cell CellFrom = (Cell) db.getContent(myTrashCanFormat);
+
+					game.getSudoku().PrintPuzzle();
+					event.setDropCompleted(success);
+					event.consume();
+					
+					BuildGrids();
 				}
-				game.getSudoku().PrintPuzzle();
-				event.setDropCompleted(success);
-				event.consume();
-				BuildGrids();
 			}
 		});
 
@@ -315,11 +311,11 @@ public class SudokuController implements Initializable {
 				paneTarget.setOnDragDetected(new EventHandler<MouseEvent>() {
 					public void handle(MouseEvent event) {
 
-						// transfer mode 
+						/* allow any transfer mode */
 						Dragboard db = paneTarget.startDragAndDrop(TransferMode.ANY);
 
-						// string on dragboard */
-						// Cell on the clipboard -- cast as a cell
+						/* put a string on dragboard */
+						// Put the Cell on the clipboard, on the other side, cast as a cell
 						ClipboardContent content = new ClipboardContent();
 						content.put(myTrashCanFormat, paneTarget.getCell());
 						db.setContent(content);
@@ -327,8 +323,9 @@ public class SudokuController implements Initializable {
 					}
 				});
 
-				// omething is being dragged over a cell
-				// Checking the cell value -- if not 0 it won't be allowed to be dropped
+				// Fire this method as something is being dragged over a cell
+				// I'm checking the cell value... if it's not zero... don't let it be dropped
+				// (show the circle-with-line-through)
 				paneTarget.setOnDragOver(new EventHandler<DragEvent>() {
 					public void handle(DragEvent event) {
 						if (event.getGestureSource() != paneTarget && event.getDragboard().hasContent(myFormat)) {
@@ -341,44 +338,19 @@ public class SudokuController implements Initializable {
 					}
 				});
 
-				// Entering the item being dragged
+				// Fire this method as something is entering the item being dragged
 				paneTarget.setOnDragEntered(new EventHandler<DragEvent>() {
 					public void handle(DragEvent event) {
-						// gesture target
+						/* show to the user that it is an actual gesture target */
 						if (event.getGestureSource() != paneTarget && event.getDragboard().hasContent(myFormat)) {
 							Dragboard db = event.getDragboard();
 							Cell CellFrom = (Cell) db.getContent(myFormat);
 							Cell CellTo = (Cell) paneTarget.getCell();
 							if (CellTo.getiCellValue() == 0) {
-								if (!s.isValidValue(CellTo.getiRow(), CellTo.getiCol(), CellFrom.getiCellValue())) {									
-									// If ‘show hints’ is turned on, don’t allow a user to drop a number that will cause a violation.
-									if (game.getShowHints()) {										
-										paneTarget.setOnDragOver(new EventHandler<DragEvent>() {
-											public void handle(DragEvent event) {
-												if (event.getGestureSource() != paneTarget && event.getDragboard().hasContent(myFormat)) {
-													// Don't let the user drag over items that will cause a violation
-													if (paneTarget.getCell().getiCellValue() == CellFrom.getiCellValue()) {
-														event.acceptTransferModes(TransferMode.NONE);
-													}						
-												}
-												event.consume();
-											}
-										});
+								if (!s.isValidValue(CellTo.getiRow(), CellTo.getiCol(), CellFrom.getiCellValue())) {
+									if (game.getShowHints()) {
+										paneTarget.getChildren().add(0, SudokuStyler.getRedPane());
 									}
-								}
-								
-								else {
-									if (game.getShowHints()) {										
-										paneTarget.setOnDragOver(new EventHandler<DragEvent>() {
-											public void handle(DragEvent event) {
-												if (event.getGestureSource() != paneTarget && event.getDragboard().hasContent(myFormat)) {
-														event.acceptTransferModes(TransferMode.COPY_OR_MOVE);																			
-												}
-												event.consume();
-											}
-										});
-									}
-									
 								}
 							}
 						}
@@ -416,36 +388,30 @@ public class SudokuController implements Initializable {
 
 							if (!s.isValidValue(CellTo.getiRow(), CellTo.getiCol(), CellFrom.getiCellValue())) {
 
-								if(!game.getSudoku().isPuzzleMaxMistakes()) {
-									// Add a mistake
-									game.getSudoku().AddMistake();
-									BuildTopGrid();
+								// Add a mistake
+								game.getSudoku().AddMistake();
+								BuildTopGrid();
+
+								// TODO: Set the message for mistakes
+								if (game.getShowHints()) {
+									return;
 								}
-								
-								if(game.getSudoku().isPuzzleMaxMistakes()) {
-				 					//Game is over!! You Lose!! Maximum mistakes reached
-									EndGame();
-				 				}
 							}
 
-							// Takes the cell value from the drag-from
-							// cell and dropping a new image into the dragged to cell
+							// This is the code that is actually taking the cell value from the drag-from
+							// cell and dropping a new Image into the dragged-to cell
 							ImageView iv = new ImageView(GetImage(CellFrom.getiCellValue()));
 							paneTarget.getCell().setiCellValue(CellFrom.getiCellValue());
 							paneTarget.getChildren().clear();
 							paneTarget.getChildren().add(iv);
 							System.out.println(CellFrom.getiCellValue());
 							
-							game.getSudoku().getPuzzle()[CellTo.getiRow()][CellTo.getiCol()] = CellFrom.getiCellValue();							
-							success = true;
 							
-							// Whether or not Sudoku is filled successfully within maximum mistakes
-							if(!game.getSudoku().isPuzzleMaxMistakes() && game.getSudoku().isSudoku()) {
-								hboxNumbers.getChildren().clear();
-								hboxNumbers.setPadding((new Insets(25, 25, 25, 25)));		
-								Label lblSuccessMessage = new Label("YOU WIN! SUDOKU SUCCESSFULLY FILLED!");
-								hboxNumbers.getChildren().add(lblSuccessMessage);
-							}
+							
+							game.getSudoku().getPuzzle()[CellFrom.getiRow()][CellFrom.getiCol()] = CellFrom.getiCellValue();
+							
+							
+							success = true;
 						}
 						game.getSudoku().PrintPuzzle();
 						
@@ -454,7 +420,12 @@ public class SudokuController implements Initializable {
 					}
 				});
 
- 				gridPaneSudoku.add(paneTarget, iCol, iRow); // Add the pane to the grid									
+				gridPaneSudoku.add(paneTarget, iCol, iRow); // Add the pane to the grid
+
+				if (game.getSudoku().isPuzzleMaxMistakes()) {
+					// Game is over... Max Mistakes reached
+				}
+
 			}
 
 		}
@@ -463,12 +434,9 @@ public class SudokuController implements Initializable {
 	}
 
 	private void EndGame() {
-		// Disable the hboxNumbers items -- cant be dragged
-		// Message game over
-		hboxNumbers.getChildren().clear();
-		hboxNumbers.setPadding((new Insets(25, 25, 25, 25)));		
-		Label lblGameOver = new Label("GAME IS OVER! YOU LOSE! MAXIMUM MISTAKES REACHED!!");
-		hboxNumbers.getChildren().add(lblGameOver);
+		// Disable the hboxNumbers items so they can't be dragged
+		// Show message that the game is over
+		// Allow them to 'clear' cells / reset mistakes
 	}
 
 	private Image GetImage(int iValue) {
