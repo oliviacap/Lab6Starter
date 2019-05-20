@@ -22,6 +22,7 @@ import pkgEnum.ePuzzleViolation;
 import pkgHelper.LatinSquare;
 import pkgHelper.PuzzleViolation;
 
+
 /**
  * Sudoku - This class extends LatinSquare, adding methods, constructor to
  * handle Sudoku logic
@@ -31,6 +32,7 @@ import pkgHelper.PuzzleViolation;
  * @author Bert.Gibbons
  *
  */
+
 public class Sudoku extends LatinSquare implements Serializable {
 
 	/**
@@ -830,7 +832,7 @@ public class Sudoku extends LatinSquare implements Serializable {
 	
 	public boolean isPuzzleMaxMistakes()
 	{
-		if (this.iMistakesCnt > this.eGD.getiMaxMistakes())
+		if (this.iMistakesCnt >= this.eGD.getiMaxMistakes())
 		{
 			return true;
 		}
