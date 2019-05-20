@@ -112,7 +112,7 @@ public class SudokuController implements Initializable {
 	 */
 	private void BuildGrids() {
 
-		// Paint the top grid on the form
+		// Top grid on the form
 		BuildTopGrid();
 		GridPane gridSudoku = BuildSudokuGrid();
 
@@ -123,7 +123,8 @@ public class SudokuController implements Initializable {
 		// hboxGrid.getStyleClass().add("VBoxGameGrid");
 		hboxGrid.getChildren().add(gridSudoku);
 
-		// Clear the hboxNumbers, add the numbers
+		// clear the hboxNumbers then
+		// insert the numbers
 		GridPane gridNumbers = BuildNumbersGrid();
 
 		hboxNumbers.getChildren().clear();
@@ -202,11 +203,11 @@ public class SudokuController implements Initializable {
 			paneSource.setOnDragDetected(new EventHandler<MouseEvent>() {
 				public void handle(MouseEvent event) {
 
-					/* allow any transfer mode */
+					// allow any transfer mode 
 					Dragboard db = paneSource.startDragAndDrop(TransferMode.ANY);
 
-					/* put a string on dragboard */
-					// Put the Cell on the clipboard, on the other side, cast as a cell
+					// string on dragboard 
+					// Cell on the clipboard (on the other side) cast as a cell
 					ClipboardContent content = new ClipboardContent();
 					content.put(myFormat, paneSource.getCell());
 					db.setContent(content);
@@ -214,7 +215,7 @@ public class SudokuController implements Initializable {
 				}
 			});
 
-			// Add the pane to the grid
+			// add pane to grid
 			gridPaneNumbers.add(paneSource, iCol, 0);
 		}
 
@@ -301,8 +302,9 @@ public class SudokuController implements Initializable {
 					paneTarget.getChildren().add(iv);
 				}
 
-				paneTarget.getStyleClass().clear(); // Clear any errant styling in the pane
-				paneTarget.setStyle(ss.getStyle(new Cell(iRow, iCol))); // Set the styling.
+				paneTarget.getStyleClass().clear(); // clear any errant styling in pane
+				// sets the styling
+				paneTarget.setStyle(ss.getStyle(new Cell(iRow, iCol))); 
 
 				paneTarget.setOnMouseClicked(e -> {
 					System.out.println(paneTarget.getCell().getiCellValue());
@@ -311,11 +313,11 @@ public class SudokuController implements Initializable {
 				paneTarget.setOnDragDetected(new EventHandler<MouseEvent>() {
 					public void handle(MouseEvent event) {
 
-						/* allow any transfer mode */
+						// allow any transfer mode
 						Dragboard db = paneTarget.startDragAndDrop(TransferMode.ANY);
 
-						/* put a string on dragboard */
-						// Put the Cell on the clipboard, on the other side, cast as a cell
+						// put string on dragboard
+						// put the cell on  clipboard (on the other side) cast as cell
 						ClipboardContent content = new ClipboardContent();
 						content.put(myTrashCanFormat, paneTarget.getCell());
 						db.setContent(content);
@@ -323,9 +325,11 @@ public class SudokuController implements Initializable {
 					}
 				});
 
-				// Fire this method as something is being dragged over a cell
-				// I'm checking the cell value... if it's not zero... don't let it be dropped
-				// (show the circle-with-line-through)
+				//As something is being dragged over a cell
+				// checks the cell value
+				// if not zero
+				// does not let it be dropped
+				// circle w line through
 				paneTarget.setOnDragOver(new EventHandler<DragEvent>() {
 					public void handle(DragEvent event) {
 						if (event.getGestureSource() != paneTarget && event.getDragboard().hasContent(myFormat)) {
@@ -338,10 +342,10 @@ public class SudokuController implements Initializable {
 					}
 				});
 
-				// Fire this method as something is entering the item being dragged
+				// something is entering the item being dragged
 				paneTarget.setOnDragEntered(new EventHandler<DragEvent>() {
 					public void handle(DragEvent event) {
-						/* show to the user that it is an actual gesture target */
+						// show to the user that it is an actual gesture target
 						if (event.getGestureSource() != paneTarget && event.getDragboard().hasContent(myFormat)) {
 							Dragboard db = event.getDragboard();
 							Cell CellFrom = (Cell) db.getContent(myFormat);
